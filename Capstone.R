@@ -1,5 +1,7 @@
 #setting up environment
 install.packages('tidyverse')
+install.packages('hydroTSM')
+library(hydroTSM)
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
@@ -66,12 +68,13 @@ data_final <- na.omit(data_cleaned)
 
 sum(is.na(data_final$Ride_Time))
 
-
+#Getting some aggregates for ride times per member type.
 aggregate(data_final$Ride_Time ~ data_final$Member_Type, FUN = mean)
 aggregate(data_final$Ride_Time ~ data_final$Member_Type, FUN = median)
 aggregate(data_final$Ride_Time ~ data_final$Member_Type, FUN = max)
 aggregate(data_final$Ride_Time ~ data_final$Member_Type, FUN = min)
 
+#Time for some graphs!
 data_final %>% 
   mutate(weekday = wday(Start_Date, label = TRUE)) %>% 
   group_by(Member_Type, weekday) %>% 
@@ -84,9 +87,18 @@ data_final %>%
 data_final %>% 
   mutate(weekday = wday(Start_Date, label = TRUE)) %>% 
   group_by(Member_Type, weekday) %>% 
-  summarise(average_duration = mean(Ride_Time)) %>% 
+  summarise(Average_Duration = mean(Ride_Time)) %>% 
   arrange(Member_Type, weekday)  %>% 
-  ggplot(aes(x = weekday, y = average_duration, fill = Member_Type)) +
+  ggplot(aes(x = weekday, y = Average_Duration, fill = Member_Type)) +
   geom_col(position = "dodge")+
   labs(title = 'Average ride time by day of week', subtitle = 'Graph #2 Electric Boogaloo')
+
+data_final %>% 
+  mutate(Season = time2season(Start_Date, out.fmt = "seasons")) %>% 
+  group_by(Member_Type, Season) %>% 
+  summarise(number_of_rides = n()) %>% 
+  arrange(Member_Type) %>% 
+  ggplot(mapping = aes(x = Season, y = number_of_rides, fill = Member_Type))+
+  geom_col(position = "dodge")+
+  labs(title = 'Rides per season', subtitle = "Graph #3, this time it's seasonal")
 
